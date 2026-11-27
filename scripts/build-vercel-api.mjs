@@ -1,10 +1,9 @@
 import { build } from 'esbuild';
 import fs from 'node:fs';
-import path from 'node:path';
 
-async function compileCjsFunction(entryPoint, outfile) {
+async function buildApi() {
   const result = await build({
-    entryPoints: [entryPoint],
+    entryPoints: ['server/vercel-entry.ts'],
     bundle: true,
     platform: 'node',
     target: 'node20',
@@ -14,7 +13,6 @@ async function compileCjsFunction(entryPoint, outfile) {
   });
 
   let code = result.outputFiles[0].text;
-  // Ensure direct function export as module.exports AND module.exports.default
   code = code.replace(
     /module\.exports\s*=\s*__toCommonJS\([^)]+\);/,
     'module.exports = handler;\nmodule.exports.default = handler;'
@@ -23,10 +21,9 @@ async function compileCjsFunction(entryPoint, outfile) {
     code += '\nmodule.exports = handler;\nmodule.exports.default = handler;\n';
   }
 
-  fs.mkdirSync(path.dirname(outfile), { recursive: true });
-  fs.writeFileSync(outfile, code, 'utf-8');
-  console.log(`Built ${outfile} (${Buffer.byteLength(code)} bytes)`);
+  fs.mkdirSync('api', { recursive: true });
+  fs.writeFileSync('api/index.js', code, 'utf-8');
+  console.log(`Built api/index.js (${Buffer.byteLength(code)} bytes)`);
 }
 
-await compileCjsFunction('server/vercel-core-entry.ts', 'api/index.cjs');
-await compileCjsFunction('server/vercel-ai-entry.ts', 'api/ai.cjs');
+await buildApi();
