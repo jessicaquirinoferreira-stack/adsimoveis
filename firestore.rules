@@ -31,7 +31,7 @@ service cloud.firestore {
     }
 
     function isBootstrapAdmin() {
-      return isValidEmailToken() && (
+      return isSignedIn() && (
         request.auth.token.email == 'nonhu2490@gmail.com' ||
         request.auth.token.email == 'admin@x.com'
       );
