@@ -154,14 +154,18 @@ export function AdminPage({
     try {
       await apiAdminLogin(loginEmail.trim(), loginPassword);
       // Also attempt Firebase Email/Password auth silently if enabled on console
-      const fb = await tryFirebaseEmailSignIn(loginEmail.trim(), loginPassword);
-      if (fb.ok) {
-        setFirebaseUserEmail(auth.currentUser?.email || loginEmail.trim());
-        setFirebaseNotice('Sincronização direta com Firebase ativa.');
-      } else if (fb.code === 'auth/operation-not-allowed') {
-        setFirebaseNotice(
-          'Autenticação local do painel ativa. Para gravar diretamente no Firestore sem login Google, ative "E-mail/senha" no Firebase Authentication ou clique em Conectar Google na aba Segurança.'
-        );
+      try {
+        const fb = await tryFirebaseEmailSignIn(loginEmail.trim(), loginPassword);
+        if (fb.ok) {
+          setFirebaseUserEmail(auth.currentUser?.email || loginEmail.trim());
+          setFirebaseNotice('Sincronização direta com Firebase ativa.');
+        } else if (fb.code === 'auth/operation-not-allowed') {
+          setFirebaseNotice(
+            'Autenticação local do painel ativa. Para gravar diretamente no Firestore sem login Google, ative "E-mail/senha" no Firebase Authentication ou clique em Conectar Google na aba Segurança.'
+          );
+        }
+      } catch {
+        // Optional Firebase Email/Password provider is non-blocking for admin panel entry
       }
       await loadAdminWorkspace(activeTenantId);
       setAuthenticated(true);

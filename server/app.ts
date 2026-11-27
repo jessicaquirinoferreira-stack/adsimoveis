@@ -5,6 +5,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { GoogleGenAI, Type } from '@google/genai';
 import { put } from '@vercel/blob';
 import { DEFAULT_TENANT_CONFIG, DEFAULT_TENANT_ID } from '../src/data/defaults';
+import firebaseConfig from '../firebase-applet-config.json';
 import { getStore, saveStore } from './store';
 import type {
   Development,
@@ -17,7 +18,17 @@ import type {
 const SESSION_SECRET =
   process.env.SESSION_SECRET && process.env.SESSION_SECRET.trim().length >= 16
     ? process.env.SESSION_SECRET.trim()
-    : crypto.randomBytes(32).toString('hex');
+    : crypto
+        .createHash('sha256')
+        .update(
+          [
+            firebaseConfig.projectId,
+            firebaseConfig.firestoreDatabaseId,
+            firebaseConfig.appId,
+            process.env.ADMIN_EMAIL || 'admin@x.com',
+          ].join(':')
+        )
+        .digest('hex');
 
 const VALID_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
 

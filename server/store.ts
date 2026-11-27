@@ -47,7 +47,7 @@ function createInitialState(): StoreState {
   };
 }
 
-function resolveStoreFilePath(): string {
+function resolveStoreFilePath(): string | null {
   const localDir = path.resolve(process.cwd(), '.data');
   try {
     if (!fs.existsSync(localDir)) {
@@ -58,24 +58,28 @@ function resolveStoreFilePath(): string {
     fs.unlinkSync(testPath);
     return path.join(localDir, 'store.json');
   } catch {
-    const tmpDir = '/tmp/ads-imoveis-data';
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true });
+    try {
+      const tmpDir = '/tmp/ads-imoveis-data';
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+      return path.join(tmpDir, 'store.json');
+    } catch {
+      return null;
     }
-    return path.join(tmpDir, 'store.json');
   }
 }
 
 let memoryStore: StoreState | null = null;
-let storeFilePath: string | null = null;
+let storeFilePath: string | null | undefined = undefined;
 
 export function getStore(): StoreState {
   if (memoryStore) return memoryStore;
-  if (!storeFilePath) {
+  if (storeFilePath === undefined) {
     storeFilePath = resolveStoreFilePath();
   }
   try {
-    if (fs.existsSync(storeFilePath)) {
+    if (storeFilePath && fs.existsSync(storeFilePath)) {
       const raw = fs.readFileSync(storeFilePath, 'utf-8');
       const parsed = JSON.parse(raw) as StoreState;
       if (!parsed.tenants || !parsed.tenants[DEFAULT_TENANT_ID]) {
@@ -111,9 +115,10 @@ export function getStore(): StoreState {
 
 export function saveStore(next: StoreState): void {
   memoryStore = next;
-  if (!storeFilePath) {
+  if (storeFilePath === undefined) {
     storeFilePath = resolveStoreFilePath();
   }
+  if (!storeFilePath) return;
   try {
     fs.writeFileSync(storeFilePath, JSON.stringify(next, null, 2), 'utf-8');
   } catch {
