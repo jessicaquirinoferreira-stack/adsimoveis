@@ -4,6 +4,22 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/api/ai/(.*)",
+      "destination": "/api/ai?__route=/api/ai/$1"
+    },
+    {
+      "source": "/api/assistant/(.*)",
+      "destination": "/api/ai?__route=/api/assistant/$1"
+    },
+    {
+      "source": "/api/blob/(.*)",
+      "destination": "/api/ai?__route=/api/blob/$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index?__route=/api/$1"
     },
