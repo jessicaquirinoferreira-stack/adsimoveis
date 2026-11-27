@@ -1,0 +1,6 @@
+{
+  "name": "A D S Imóveis — Vendas e Locações em São Paulo",
+  "description": "Plataforma imobiliária premium da A D S Imóveis e Intermediações de Negócios (CRECI 226079-F) com foco em vendas e locações em São Paulo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

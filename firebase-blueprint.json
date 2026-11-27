@@ -1,0 +1,556 @@
+{
+  "entities": {
+    "TenantConfig": {
+      "title": "TenantConfig",
+      "description": "Configuração institucional, identidade visual, tema e dados de contato configuráveis da imobiliária (multi-tenant).",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "description": "Identificador único do tenant.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Nome comercial da corretora.",
+          "maxLength": 140
+        },
+        "slogan": {
+          "type": "string",
+          "description": "Slogan ou posicionamento da corretora.",
+          "maxLength": 160
+        },
+        "creci": {
+          "type": "string",
+          "description": "Registro profissional CRECI.",
+          "maxLength": 40
+        },
+        "city": {
+          "type": "string",
+          "description": "Cidade principal de atuação.",
+          "maxLength": 80
+        },
+        "regions": {
+          "type": "array",
+          "description": "Regiões e bairros de atuação em São Paulo."
+        },
+        "whatsapp": {
+          "type": "string",
+          "description": "Número oficial de WhatsApp configurável no painel.",
+          "maxLength": 32
+        },
+        "phone": {
+          "type": "string",
+          "description": "Telefone comercial configurável no painel.",
+          "maxLength": 32
+        },
+        "email": {
+          "type": "string",
+          "description": "E-mail comercial configurável no painel.",
+          "maxLength": 120
+        },
+        "address": {
+          "type": "string",
+          "description": "Endereço físico configurável no painel.",
+          "maxLength": 240
+        },
+        "instagramUrl": {
+          "type": "string",
+          "description": "Link do Instagram oficial.",
+          "maxLength": 240
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domínio personalizado do tenant.",
+          "maxLength": 160
+        },
+        "heroHeadline": {
+          "type": "string",
+          "description": "Manchete cinematográfica da página inicial.",
+          "maxLength": 200
+        },
+        "heroSubheadline": {
+          "type": "string",
+          "description": "Subtítulo institucional da página inicial.",
+          "maxLength": 360
+        },
+        "aboutTitle": {
+          "type": "string",
+          "description": "Título da página Sobre.",
+          "maxLength": 160
+        },
+        "aboutText": {
+          "type": "string",
+          "description": "Texto institucional da página Sobre.",
+          "maxLength": 4000
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL do logotipo configurado.",
+          "maxLength": 500
+        },
+        "faviconUrl": {
+          "type": "string",
+          "description": "URL do favicon configurado.",
+          "maxLength": 500
+        },
+        "themePreset": {
+          "type": "string",
+          "enum": [
+            "moderno-profissional",
+            "minimalista-premium",
+            "imobiliario-contemporaneo",
+            "confianca-oportunidade"
+          ],
+          "description": "Tema visual selecionado."
+        },
+        "themeTokens": {
+          "type": "object",
+          "description": "Cores, tipografia, raios de borda, sombras e gradientes do tema."
+        },
+        "seoTitle": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "seoDescription": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "assistantName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "assistantRole": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "assistantAvatarUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "tenantId",
+        "companyName",
+        "slogan",
+        "creci",
+        "city",
+        "themePreset",
+        "updatedAt"
+      ]
+    },
+    "Property": {
+      "title": "Property",
+      "description": "Imóvel residencial ou comercial disponível para venda ou locação em São Paulo.",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 140,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 6000
+        },
+        "transactionType": {
+          "type": "string",
+          "enum": ["venda", "aluguel", "venda_aluguel"]
+        },
+        "propertyType": {
+          "type": "string",
+          "enum": ["apartamento", "comercial", "casa", "studio", "terreno"]
+        },
+        "neighborhood": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "regionHighlight": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "salePrice": {
+          "type": "number"
+        },
+        "rentPrice": {
+          "type": "number"
+        },
+        "condoFee": {
+          "type": "number"
+        },
+        "iptuFee": {
+          "type": "number"
+        },
+        "areaSqm": {
+          "type": "number"
+        },
+        "bedrooms": {
+          "type": "integer"
+        },
+        "bathrooms": {
+          "type": "integer"
+        },
+        "suites": {
+          "type": "integer"
+        },
+        "parkingSpaces": {
+          "type": "integer"
+        },
+        "furnished": {
+          "type": "boolean"
+        },
+        "fullLeisure": {
+          "type": "boolean"
+        },
+        "features": {
+          "type": "array"
+        },
+        "images": {
+          "type": "array"
+        },
+        "videoUrl": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "virtualTourMode": {
+          "type": "string",
+          "enum": ["panoramic_360", "guided_story", "hotspot_explorer"]
+        },
+        "virtualTourData": {
+          "type": "object"
+        },
+        "aiAnalysis": {
+          "type": "object"
+        },
+        "featured": {
+          "type": "boolean"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["disponivel", "reservado", "vendido", "alugado"]
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "tenantId",
+        "slug",
+        "title",
+        "transactionType",
+        "propertyType",
+        "neighborhood",
+        "city",
+        "areaSqm",
+        "parkingSpaces",
+        "furnished",
+        "fullLeisure",
+        "published",
+        "status",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Development": {
+      "title": "Development",
+      "description": "Empreendimento imobiliário administrado pela corretora.",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "neighborhood": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["lancamento", "em_obras", "pronto"]
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "coverImage": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "amenities": {
+          "type": "array"
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "tenantId",
+        "slug",
+        "name",
+        "neighborhood",
+        "city",
+        "stage",
+        "published",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LandingPage": {
+      "title": "LandingPage",
+      "description": "Landing page segmentada por região ou categoria de imóvel.",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "headline": {
+          "type": "string",
+          "maxLength": 220
+        },
+        "subheadline": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "heroImage": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "ctaLabel": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "targetRegion": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "propertyFilterType": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "bodyText": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "tenantId",
+        "slug",
+        "title",
+        "headline",
+        "published",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Contato e solicitação de atendimento/visita com consentimento LGPD.",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "interestType": {
+          "type": "string",
+          "enum": ["venda", "aluguel", "avaliacao", "visita", "comercial"]
+        },
+        "propertyId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "propertyTitle": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "sourcePage": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "status": {
+          "type": "string",
+          "enum": ["novo", "em_atendimento", "agendado", "convertido", "arquivado"]
+        },
+        "lgpdConsent": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name",
+        "phone",
+        "interestType",
+        "status",
+        "lgpdConsent",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Registro de administrador autorizado no Firestore.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "broker_admin"]
+        },
+        "tenantId": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role", "tenantId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/tenants/{tenantId}": {
+      "schema": { "$ref": "#/entities/TenantConfig" },
+      "description": "Configuração pública e tema de cada imobiliária (tenant)."
+    },
+    "/properties/{propertyId}": {
+      "schema": { "$ref": "#/entities/Property" },
+      "description": "Catálogo multi-tenant de imóveis (venda e locação)."
+    },
+    "/developments/{developmentId}": {
+      "schema": { "$ref": "#/entities/Development" },
+      "description": "Empreendimentos imobiliários cadastrados."
+    },
+    "/landingPages/{landingPageId}": {
+      "schema": { "$ref": "#/entities/LandingPage" },
+      "description": "Landing pages temáticas de regiões e tipos de imóveis."
+    },
+    "/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/Lead" },
+      "description": "Leads capturados pelo site público (PII protegida, leitura restrita a admins)."
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Lista de administradores autorizados por UID."
+    }
+  }
+}

@@ -1,0 +1,367 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Primitive Helpers
+    // =========================================================================
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidEmailToken() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrapAdmin() {
+      return isValidEmailToken() && (
+        request.auth.token.email == 'nonhu2490@gmail.com' ||
+        request.auth.token.email == 'admin@x.com'
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isBootstrapAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isStringList(val, maxItems) {
+      return val is list && val.size() <= maxItems && (val.size() == 0 || val[0] is string);
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints
+    // =========================================================================
+    function isValidTenantConfig(data) {
+      return data.keys().hasAll([
+          'tenantId', 'companyName', 'slogan', 'creci', 'city', 'themePreset', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'tenantId', 'companyName', 'slogan', 'creci', 'city', 'regions',
+          'whatsapp', 'phone', 'email', 'address', 'instagramUrl', 'domain',
+          'heroHeadline', 'heroSubheadline', 'aboutTitle', 'aboutText',
+          'logoUrl', 'faviconUrl', 'themePreset', 'themeTokens',
+          'seoTitle', 'seoDescription', 'assistantName', 'assistantRole', 'assistantAvatarUrl', 'updatedAt'
+        ]) &&
+        isValidId(data.tenantId) &&
+        data.tenantId.size() <= 64 &&
+        data.companyName is string && data.companyName.size() >= 2 && data.companyName.size() <= 140 &&
+        data.slogan is string && data.slogan.size() <= 160 &&
+        data.creci is string && data.creci.size() <= 40 &&
+        data.city is string && data.city.size() <= 80 &&
+        data.themePreset in ['moderno-profissional', 'minimalista-premium', 'imobiliario-contemporaneo', 'confianca-oportunidade'] &&
+        (!('regions' in data) || isStringList(data.regions, 30)) &&
+        isOptionalString(data, 'whatsapp', 32) &&
+        isOptionalString(data, 'phone', 32) &&
+        isOptionalString(data, 'email', 120) &&
+        isOptionalString(data, 'address', 240) &&
+        isOptionalString(data, 'instagramUrl', 240) &&
+        isOptionalString(data, 'domain', 160) &&
+        isOptionalString(data, 'heroHeadline', 200) &&
+        isOptionalString(data, 'heroSubheadline', 360) &&
+        isOptionalString(data, 'aboutTitle', 160) &&
+        isOptionalString(data, 'aboutText', 4000) &&
+        isOptionalString(data, 'logoUrl', 500) &&
+        isOptionalString(data, 'faviconUrl', 500) &&
+        isOptionalString(data, 'seoTitle', 140) &&
+        isOptionalString(data, 'seoDescription', 240) &&
+        isOptionalString(data, 'assistantName', 80) &&
+        isOptionalString(data, 'assistantRole', 100) &&
+        isOptionalString(data, 'assistantAvatarUrl', 500) &&
+        (!('themeTokens' in data) || data.themeTokens is map) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProperty(data) {
+      return data.keys().hasAll([
+          'tenantId', 'slug', 'title', 'transactionType', 'propertyType',
+          'neighborhood', 'city', 'areaSqm', 'parkingSpaces', 'furnished',
+          'fullLeisure', 'published', 'status', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'tenantId', 'slug', 'title', 'subtitle', 'description',
+          'transactionType', 'propertyType', 'neighborhood', 'city', 'regionHighlight',
+          'salePrice', 'rentPrice', 'condoFee', 'iptuFee', 'areaSqm',
+          'bedrooms', 'bathrooms', 'suites', 'parkingSpaces',
+          'furnished', 'fullLeisure', 'features', 'images', 'videoUrl',
+          'virtualTourMode', 'virtualTourData', 'aiAnalysis',
+          'featured', 'published', 'status', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.tenantId) && data.tenantId.size() <= 64 &&
+        isValidId(data.slug) && data.slug.size() <= 140 &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 160 &&
+        isOptionalString(data, 'subtitle', 240) &&
+        isOptionalString(data, 'description', 6000) &&
+        data.transactionType in ['venda', 'aluguel', 'venda_aluguel'] &&
+        data.propertyType in ['apartamento', 'comercial', 'casa', 'studio', 'terreno'] &&
+        data.neighborhood is string && data.neighborhood.size() >= 2 && data.neighborhood.size() <= 100 &&
+        data.city is string && data.city.size() >= 2 && data.city.size() <= 80 &&
+        isOptionalString(data, 'regionHighlight', 160) &&
+        (!('salePrice' in data) || (data.salePrice is number && data.salePrice >= 0)) &&
+        (!('rentPrice' in data) || (data.rentPrice is number && data.rentPrice >= 0)) &&
+        (!('condoFee' in data) || (data.condoFee is number && data.condoFee >= 0)) &&
+        (!('iptuFee' in data) || (data.iptuFee is number && data.iptuFee >= 0)) &&
+        data.areaSqm is number && data.areaSqm >= 0 &&
+        (!('bedrooms' in data) || (data.bedrooms is int && data.bedrooms >= 0 && data.bedrooms <= 30)) &&
+        (!('bathrooms' in data) || (data.bathrooms is int && data.bathrooms >= 0 && data.bathrooms <= 30)) &&
+        (!('suites' in data) || (data.suites is int && data.suites >= 0 && data.suites <= 20)) &&
+        data.parkingSpaces is int && data.parkingSpaces >= 0 && data.parkingSpaces <= 50 &&
+        data.furnished is bool &&
+        data.fullLeisure is bool &&
+        (!('features' in data) || isStringList(data.features, 30)) &&
+        (!('images' in data) || isStringList(data.images, 20)) &&
+        isOptionalString(data, 'videoUrl', 1000) &&
+        (!('virtualTourMode' in data) || data.virtualTourMode in ['panoramic_360', 'guided_story', 'hotspot_explorer']) &&
+        (!('virtualTourData' in data) || data.virtualTourData is map) &&
+        (!('aiAnalysis' in data) || data.aiAnalysis is map) &&
+        (!('featured' in data) || data.featured is bool) &&
+        data.published is bool &&
+        data.status in ['disponivel', 'reservado', 'vendido', 'alugado'] &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidDevelopment(data) {
+      return data.keys().hasAll([
+          'tenantId', 'slug', 'name', 'neighborhood', 'city',
+          'stage', 'published', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'tenantId', 'slug', 'name', 'neighborhood', 'city',
+          'stage', 'summary', 'coverImage', 'amenities',
+          'published', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.tenantId) && data.tenantId.size() <= 64 &&
+        isValidId(data.slug) && data.slug.size() <= 140 &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 160 &&
+        data.neighborhood is string && data.neighborhood.size() <= 100 &&
+        data.city is string && data.city.size() <= 80 &&
+        data.stage in ['lancamento', 'em_obras', 'pronto'] &&
+        isOptionalString(data, 'summary', 2000) &&
+        isOptionalString(data, 'coverImage', 1000) &&
+        (!('amenities' in data) || isStringList(data.amenities, 25)) &&
+        data.published is bool &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLandingPage(data) {
+      return data.keys().hasAll([
+          'tenantId', 'slug', 'title', 'headline', 'published', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'tenantId', 'slug', 'title', 'headline', 'subheadline',
+          'heroImage', 'ctaLabel', 'targetRegion', 'propertyFilterType',
+          'bodyText', 'published', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.tenantId) && data.tenantId.size() <= 64 &&
+        isValidId(data.slug) && data.slug.size() <= 140 &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 160 &&
+        data.headline is string && data.headline.size() >= 2 && data.headline.size() <= 220 &&
+        isOptionalString(data, 'subheadline', 400) &&
+        isOptionalString(data, 'heroImage', 1000) &&
+        isOptionalString(data, 'ctaLabel', 80) &&
+        isOptionalString(data, 'targetRegion', 100) &&
+        isOptionalString(data, 'propertyFilterType', 60) &&
+        isOptionalString(data, 'bodyText', 5000) &&
+        data.published is bool &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLead(data) {
+      return data.keys().hasAll([
+          'tenantId', 'name', 'phone', 'interestType', 'status', 'lgpdConsent', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'tenantId', 'name', 'email', 'phone', 'message',
+          'interestType', 'propertyId', 'propertyTitle', 'sourcePage',
+          'status', 'lgpdConsent', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.tenantId) && data.tenantId.size() <= 64 &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 120 &&
+        isOptionalString(data, 'email', 140) &&
+        data.phone is string && data.phone.size() >= 8 && data.phone.size() <= 40 &&
+        isOptionalString(data, 'message', 2000) &&
+        data.interestType in ['venda', 'aluguel', 'avaliacao', 'visita', 'comercial'] &&
+        isOptionalString(data, 'propertyId', 128) &&
+        isOptionalString(data, 'propertyTitle', 180) &&
+        isOptionalString(data, 'sourcePage', 160) &&
+        data.status in ['novo', 'em_atendimento', 'agendado', 'convertido', 'arquivado'] &&
+        data.lgpdConsent == true &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'tenantId', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'role', 'tenantId', 'createdAt']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() <= 140 &&
+        data.role in ['admin', 'broker_admin'] &&
+        isValidId(data.tenantId) && data.tenantId.size() <= 64 &&
+        data.createdAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection Rules
+    // =========================================================================
+
+    match /tenants/{tenantId} {
+      allow get: if isValidId(tenantId);
+      allow list: if isValidId(resource.data.tenantId);
+      allow create: if isAdmin() &&
+        isValidId(tenantId) &&
+        isValidTenantConfig(incoming()) &&
+        incoming().tenantId == tenantId &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(tenantId) &&
+        isValidTenantConfig(incoming()) &&
+        incoming().tenantId == existing().tenantId &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'companyName', 'slogan', 'creci', 'city', 'regions',
+          'whatsapp', 'phone', 'email', 'address', 'instagramUrl', 'domain',
+          'heroHeadline', 'heroSubheadline', 'aboutTitle', 'aboutText',
+          'logoUrl', 'faviconUrl', 'themePreset', 'themeTokens',
+          'seoTitle', 'seoDescription', 'assistantName', 'assistantRole', 'assistantAvatarUrl', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /properties/{propertyId} {
+      allow get: if isValidId(propertyId) && (existing().published == true || isAdmin());
+      allow list: if resource.data.published == true || isBootstrapAdmin();
+      allow create: if isAdmin() &&
+        isValidId(propertyId) &&
+        isValidProperty(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/tenants/$(incoming().tenantId));
+      allow update: if isAdmin() &&
+        isValidId(propertyId) &&
+        isValidProperty(incoming()) &&
+        incoming().tenantId == existing().tenantId &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'title', 'subtitle', 'description',
+          'transactionType', 'propertyType', 'neighborhood', 'city', 'regionHighlight',
+          'salePrice', 'rentPrice', 'condoFee', 'iptuFee', 'areaSqm',
+          'bedrooms', 'bathrooms', 'suites', 'parkingSpaces',
+          'furnished', 'fullLeisure', 'features', 'images', 'videoUrl',
+          'virtualTourMode', 'virtualTourData', 'aiAnalysis',
+          'featured', 'published', 'status', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(propertyId);
+    }
+
+    match /developments/{developmentId} {
+      allow get: if isValidId(developmentId) && (existing().published == true || isAdmin());
+      allow list: if resource.data.published == true || isBootstrapAdmin();
+      allow create: if isAdmin() &&
+        isValidId(developmentId) &&
+        isValidDevelopment(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/tenants/$(incoming().tenantId));
+      allow update: if isAdmin() &&
+        isValidId(developmentId) &&
+        isValidDevelopment(incoming()) &&
+        incoming().tenantId == existing().tenantId &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'name', 'neighborhood', 'city', 'stage', 'summary',
+          'coverImage', 'amenities', 'published', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(developmentId);
+    }
+
+    match /landingPages/{landingPageId} {
+      allow get: if isValidId(landingPageId) && (existing().published == true || isAdmin());
+      allow list: if resource.data.published == true || isBootstrapAdmin();
+      allow create: if isAdmin() &&
+        isValidId(landingPageId) &&
+        isValidLandingPage(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/tenants/$(incoming().tenantId));
+      allow update: if isAdmin() &&
+        isValidId(landingPageId) &&
+        isValidLandingPage(incoming()) &&
+        incoming().tenantId == existing().tenantId &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'title', 'headline', 'subheadline', 'heroImage',
+          'ctaLabel', 'targetRegion', 'propertyFilterType', 'bodyText',
+          'published', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(landingPageId);
+    }
+
+    match /leads/{leadId} {
+      allow get: if isAdmin() && isValidId(leadId);
+      allow list: if isBootstrapAdmin();
+      allow create: if isValidId(leadId) &&
+        isValidLead(incoming()) &&
+        incoming().status == 'novo' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/tenants/$(incoming().tenantId));
+      allow update: if isAdmin() &&
+        isValidId(leadId) &&
+        isValidLead(incoming()) &&
+        incoming().tenantId == existing().tenantId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'message', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(leadId);
+    }
+
+    match /admins/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin()) && isValidId(uid);
+      allow list: if isBootstrapAdmin();
+      allow create, update: if isAdmin() &&
+        isValidId(uid) &&
+        isValidAdminUser(incoming()) &&
+        incoming().uid == uid &&
+        incoming().createdAt == request.time;
+      allow delete: if isAdmin() && isValidId(uid);
+    }
+  }
+}
