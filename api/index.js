@@ -1,43 +1,7 @@
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// server/vercel-entry.ts
-var vercel_entry_exports = {};
-__export(vercel_entry_exports, {
-  default: () => handler
-});
-module.exports = handler;
-module.exports.default = handler;
-
 // server/coreHandler.ts
-var import_node_crypto2 = __toESM(require("node:crypto"), 1);
-var import_node_fs3 = __toESM(require("node:fs"), 1);
-var import_node_path3 = __toESM(require("node:path"), 1);
+import crypto2 from "node:crypto";
+import fs3 from "node:fs";
+import path3 from "node:path";
 
 // src/data/defaults.ts
 var DEFAULT_TENANT_ID = "ads-imoveis-sp";
@@ -509,8 +473,8 @@ var DEFAULT_LANDING_PAGES = [
 ];
 
 // server/store.ts
-var import_node_fs = __toESM(require("node:fs"), 1);
-var import_node_path = __toESM(require("node:path"), 1);
+import fs from "node:fs";
+import path from "node:path";
 var DEFAULT_SCRYPT_SALT = "ads_imoveis_sp_226079";
 var DEFAULT_SCRYPT_HASH = "3ad89ce1240b6ffdf2baac729f256423a96106f7d8d7506c044f218462f5cc642242c8086b2697d002f364c751c98fbefb9d0908199e3da8661f508050a58619";
 function createInitialState() {
@@ -529,22 +493,22 @@ function createInitialState() {
   };
 }
 function resolveStoreFilePath() {
-  const localDir = import_node_path.default.resolve(process.cwd(), ".data");
+  const localDir = path.resolve(process.cwd(), ".data");
   try {
-    if (!import_node_fs.default.existsSync(localDir)) {
-      import_node_fs.default.mkdirSync(localDir, { recursive: true });
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
     }
-    const testPath = import_node_path.default.join(localDir, ".write-check");
-    import_node_fs.default.writeFileSync(testPath, "ok", "utf-8");
-    import_node_fs.default.unlinkSync(testPath);
-    return import_node_path.default.join(localDir, "store.json");
+    const testPath = path.join(localDir, ".write-check");
+    fs.writeFileSync(testPath, "ok", "utf-8");
+    fs.unlinkSync(testPath);
+    return path.join(localDir, "store.json");
   } catch {
     try {
       const tmpDir = "/tmp/ads-imoveis-data";
-      if (!import_node_fs.default.existsSync(tmpDir)) {
-        import_node_fs.default.mkdirSync(tmpDir, { recursive: true });
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
       }
-      return import_node_path.default.join(tmpDir, "store.json");
+      return path.join(tmpDir, "store.json");
     } catch {
       return null;
     }
@@ -558,8 +522,8 @@ function getStore() {
     storeFilePath = resolveStoreFilePath();
   }
   try {
-    if (storeFilePath && import_node_fs.default.existsSync(storeFilePath)) {
-      const raw = import_node_fs.default.readFileSync(storeFilePath, "utf-8");
+    if (storeFilePath && fs.existsSync(storeFilePath)) {
+      const raw = fs.readFileSync(storeFilePath, "utf-8");
       const parsed = JSON.parse(raw);
       if (!parsed.tenants || !parsed.tenants[DEFAULT_TENANT_ID]) {
         parsed.tenants = {
@@ -597,15 +561,15 @@ function saveStore(next) {
   }
   if (!storeFilePath) return;
   try {
-    import_node_fs.default.writeFileSync(storeFilePath, JSON.stringify(next, null, 2), "utf-8");
+    fs.writeFileSync(storeFilePath, JSON.stringify(next, null, 2), "utf-8");
   } catch {
   }
 }
 
 // server/shared.ts
-var import_node_crypto = __toESM(require("node:crypto"), 1);
-var import_node_fs2 = __toESM(require("node:fs"), 1);
-var import_node_path2 = __toESM(require("node:path"), 1);
+import crypto from "node:crypto";
+import fs2 from "node:fs";
+import path2 from "node:path";
 
 // firebase-applet-config.json
 var firebase_applet_config_default = {
@@ -622,7 +586,7 @@ var firebase_applet_config_default = {
 };
 
 // server/shared.ts
-var SESSION_SECRET = process.env.SESSION_SECRET && process.env.SESSION_SECRET.trim().length >= 16 ? process.env.SESSION_SECRET.trim() : import_node_crypto.default.createHash("sha256").update(
+var SESSION_SECRET = process.env.SESSION_SECRET && process.env.SESSION_SECRET.trim().length >= 16 ? process.env.SESSION_SECRET.trim() : crypto.createHash("sha256").update(
   [
     firebase_applet_config_default.projectId,
     firebase_applet_config_default.firestoreDatabaseId,
@@ -644,20 +608,20 @@ function sanitizeUrl(url) {
   return "";
 }
 function getUploadDir() {
-  const dir = import_node_path2.default.resolve(process.cwd(), ".uploads");
+  const dir = path2.resolve(process.cwd(), ".uploads");
   try {
-    if (!import_node_fs2.default.existsSync(dir)) {
-      import_node_fs2.default.mkdirSync(dir, { recursive: true });
+    if (!fs2.existsSync(dir)) {
+      fs2.mkdirSync(dir, { recursive: true });
     }
-    const check = import_node_path2.default.join(dir, ".write-check");
-    import_node_fs2.default.writeFileSync(check, "ok", "utf-8");
-    import_node_fs2.default.unlinkSync(check);
+    const check = path2.join(dir, ".write-check");
+    fs2.writeFileSync(check, "ok", "utf-8");
+    fs2.unlinkSync(check);
     return dir;
   } catch {
     const tmpDir = "/tmp/ads-imoveis-uploads";
     try {
-      if (!import_node_fs2.default.existsSync(tmpDir)) {
-        import_node_fs2.default.mkdirSync(tmpDir, { recursive: true });
+      if (!fs2.existsSync(tmpDir)) {
+        fs2.mkdirSync(tmpDir, { recursive: true });
       }
       return tmpDir;
     } catch {
@@ -667,17 +631,17 @@ function getUploadDir() {
 }
 function signSessionToken(payload) {
   const encoded = Buffer.from(JSON.stringify(payload), "utf-8").toString("base64url");
-  const sig = import_node_crypto.default.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
+  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
   return `${encoded}.${sig}`;
 }
 function verifySessionToken(token) {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [encoded, sig] = parts;
-  const expectedSig = import_node_crypto.default.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
+  const expectedSig = crypto.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
   const sigBuf = Buffer.from(sig);
   const expBuf = Buffer.from(expectedSig);
-  if (sigBuf.length !== expBuf.length || !import_node_crypto.default.timingSafeEqual(sigBuf, expBuf)) {
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
     return null;
   }
   try {
@@ -695,14 +659,14 @@ function verifyAdminPassword(password) {
   if (envPass) {
     const a = Buffer.from(password, "utf-8");
     const b = Buffer.from(envPass, "utf-8");
-    return a.length === b.length && import_node_crypto.default.timingSafeEqual(a, b);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
   }
   const store = getStore();
   const creds = store.adminPasswordHash;
   if (!creds) return false;
-  const derived = import_node_crypto.default.scryptSync(password, creds.salt, 64);
+  const derived = crypto.scryptSync(password, creds.salt, 64);
   const stored = Buffer.from(creds.hashHex, "hex");
-  return derived.length === stored.length && import_node_crypto.default.timingSafeEqual(derived, stored);
+  return derived.length === stored.length && crypto.timingSafeEqual(derived, stored);
 }
 function requireAdminSession(req, res) {
   const rawHeader = req.headers.authorization;
@@ -777,7 +741,7 @@ async function readJsonBody(req) {
   });
 }
 function getMimeType(filename) {
-  const ext = import_node_path2.default.extname(filename).toLowerCase();
+  const ext = path2.extname(filename).toLowerCase();
   if (ext === ".png") return "image/png";
   if (ext === ".webp") return "image/webp";
   if (ext === ".gif") return "image/gif";
@@ -812,12 +776,12 @@ async function handleCoreApiRequest(req, res) {
       sendText(res, 404, "Not found");
       return true;
     }
-    const resolved = import_node_path3.default.resolve(uploadDir, filename);
-    if (!resolved.startsWith(uploadDir + import_node_path3.default.sep) || !import_node_fs3.default.existsSync(resolved)) {
+    const resolved = path3.resolve(uploadDir, filename);
+    if (!resolved.startsWith(uploadDir + path3.sep) || !fs3.existsSync(resolved)) {
       sendText(res, 404, "Not found");
       return true;
     }
-    const buf = import_node_fs3.default.readFileSync(resolved);
+    const buf = fs3.readFileSync(resolved);
     res.statusCode = 200;
     res.setHeader("Content-Type", getMimeType(filename));
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
@@ -884,8 +848,8 @@ async function handleCoreApiRequest(req, res) {
       sendJson(res, 400, { error: "A nova senha deve ter entre 6 e 128 caracteres." });
       return true;
     }
-    const salt = import_node_crypto2.default.randomBytes(16).toString("hex");
-    const hashHex = import_node_crypto2.default.scryptSync(newPassword, salt, 64).toString("hex");
+    const salt = crypto2.randomBytes(16).toString("hex");
+    const hashHex = crypto2.scryptSync(newPassword, salt, 64).toString("hex");
     const store = getStore();
     store.adminPasswordHash = { salt, hashHex };
     saveStore(store);
@@ -935,7 +899,7 @@ async function handleCoreApiRequest(req, res) {
     }
     const now = (/* @__PURE__ */ new Date()).toISOString();
     const lead = {
-      id: `lead_${Date.now()}_${import_node_crypto2.default.randomBytes(3).toString("hex")}`,
+      id: `lead_${Date.now()}_${crypto2.randomBytes(3).toString("hex")}`,
       tenantId,
       name,
       email,
@@ -1039,7 +1003,7 @@ async function handleCoreApiRequest(req, res) {
       return true;
     }
     const now = (/* @__PURE__ */ new Date()).toISOString();
-    const id = isValidId(body.id) ? body.id : `prop_${Date.now()}_${import_node_crypto2.default.randomBytes(2).toString("hex")}`;
+    const id = isValidId(body.id) ? body.id : `prop_${Date.now()}_${crypto2.randomBytes(2).toString("hex")}`;
     const slugBase = (body.slug || body.title).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 90);
     const property = {
       id,
@@ -1243,8 +1207,8 @@ async function handleCoreApiRequest(req, res) {
 }
 
 // server/aiHandler.ts
-var import_node_fs4 = __toESM(require("node:fs"), 1);
-var import_node_path4 = __toESM(require("node:path"), 1);
+import fs4 from "node:fs";
+import path4 from "node:path";
 async function getGenAIClient() {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
@@ -1314,11 +1278,11 @@ async function resolveImageAsInlinePart(imageUrl) {
     }
   }
   if (imageUrl.startsWith("/src/assets/")) {
-    const resolved = import_node_path4.default.resolve(process.cwd(), imageUrl.slice(1));
-    const baseDir = import_node_path4.default.resolve(process.cwd(), "src", "assets");
-    if (resolved.startsWith(baseDir + import_node_path4.default.sep) && import_node_fs4.default.existsSync(resolved)) {
-      const buf = import_node_fs4.default.readFileSync(resolved);
-      const ext = import_node_path4.default.extname(resolved).toLowerCase();
+    const resolved = path4.resolve(process.cwd(), imageUrl.slice(1));
+    const baseDir = path4.resolve(process.cwd(), "src", "assets");
+    if (resolved.startsWith(baseDir + path4.sep) && fs4.existsSync(resolved)) {
+      const buf = fs4.readFileSync(resolved);
+      const ext = path4.extname(resolved).toLowerCase();
       const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
       return {
         inlineData: {
@@ -1329,13 +1293,13 @@ async function resolveImageAsInlinePart(imageUrl) {
     }
   }
   if (imageUrl.startsWith("/uploads/")) {
-    const filename = import_node_path4.default.basename(imageUrl);
+    const filename = path4.basename(imageUrl);
     const uploadDir = getUploadDir();
     if (uploadDir) {
-      const resolved = import_node_path4.default.resolve(uploadDir, filename);
-      if (resolved.startsWith(uploadDir + import_node_path4.default.sep) && import_node_fs4.default.existsSync(resolved)) {
-        const buf = import_node_fs4.default.readFileSync(resolved);
-        const ext = import_node_path4.default.extname(resolved).toLowerCase();
+      const resolved = path4.resolve(uploadDir, filename);
+      if (resolved.startsWith(uploadDir + path4.sep) && fs4.existsSync(resolved)) {
+        const buf = fs4.readFileSync(resolved);
+        const ext = path4.extname(resolved).toLowerCase();
         const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
         return {
           inlineData: {
@@ -1406,9 +1370,9 @@ async function handleAiApiRequest(req, res) {
       }
       const uploadDir = getUploadDir();
       if (uploadDir) {
-        const target = import_node_path4.default.resolve(uploadDir, uniqueName);
-        if (target.startsWith(uploadDir + import_node_path4.default.sep)) {
-          import_node_fs4.default.writeFileSync(target, buffer);
+        const target = path4.resolve(uploadDir, uniqueName);
+        if (target.startsWith(uploadDir + path4.sep)) {
+          fs4.writeFileSync(target, buffer);
           sendJson(res, 200, {
             url: `/uploads/${uniqueName}`,
             provider: "local-storage"
@@ -1747,3 +1711,6 @@ async function handler(req, res) {
     }
   }
 }
+export {
+  handler as default
+};
