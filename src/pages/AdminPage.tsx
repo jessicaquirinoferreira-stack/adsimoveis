@@ -53,12 +53,20 @@ import {
   FIREBASE_PROJECT_ID,
   FIRESTORE_DATABASE_ID,
   auth,
+  deleteDevelopmentFromFirestore,
+  deleteLandingPageFromFirestore,
+  deleteLeadFromFirestore,
   deletePropertyFromFirestore,
+  fetchAdminFirestoreData,
   signInWithGoogleFirebase,
   signOutFirebase,
+  subscribeAuthChanges,
+  syncDevelopmentToFirestore,
+  syncLandingPageToFirestore,
   syncPropertyToFirestore,
   syncTenantToFirestore,
   tryFirebaseEmailSignIn,
+  updateLeadStatusInFirestore,
 } from '../lib/firebase';
 import { fileToDataUrl, formatBRL, formatParkingLabel } from '../lib/formatters';
 import { AIStudioModule } from '../components/admin/AIStudioModule';
@@ -139,13 +147,53 @@ export function AdminPage({
 
   const loadAdminWorkspace = async (tid = activeTenantId) => {
     const data = await apiAdminFetchAll(tid);
-    setTenant(data.tenant);
+    const fsData = await fetchAdminFirestoreData(tid).catch(() => null);
+    setTenant(fsData?.tenant || data.tenant);
     setTenants(data.tenants);
-    setProperties(data.properties);
-    setDevelopments(data.developments);
-    setLandingPages(data.landingPages);
-    setLeads(data.leads);
+
+    if (fsData && fsData.properties.length > 0) {
+      const propMap = new Map<string, Property>();
+      for (const p of data.properties) propMap.set(p.id, p);
+      for (const p of fsData.properties) propMap.set(p.id, p);
+      setProperties(Array.from(propMap.values()));
+    } else {
+      setProperties(data.properties);
+    }
+
+    if (fsData && fsData.developments.length > 0) {
+      const devMap = new Map<string, Development>();
+      for (const d of data.developments) devMap.set(d.id, d);
+      for (const d of fsData.developments) devMap.set(d.id, d);
+      setDevelopments(Array.from(devMap.values()));
+    } else {
+      setDevelopments(data.developments);
+    }
+
+    if (fsData && fsData.landingPages.length > 0) {
+      const lpMap = new Map<string, LandingPage>();
+      for (const l of data.landingPages) lpMap.set(l.id, l);
+      for (const l of fsData.landingPages) lpMap.set(l.id, l);
+      setLandingPages(Array.from(lpMap.values()));
+    } else {
+      setLandingPages(data.landingPages);
+    }
+
+    if (fsData && fsData.leads.length > 0) {
+      const leadMap = new Map<string, Lead>();
+      for (const l of data.leads) leadMap.set(l.id, l);
+      for (const l of fsData.leads) leadMap.set(l.id, l);
+      setLeads(Array.from(leadMap.values()));
+    } else {
+      setLeads(data.leads);
+    }
   };
+
+  useEffect(() => {
+    const unsub = subscribeAuthChanges((email) => {
+      setFirebaseUserEmail(email);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (!authenticated || tenants.length > 0) return;
@@ -169,7 +217,7 @@ export function AdminPage({
           setFirebaseNotice('Sincronização direta com Firebase ativa.');
         } else if (fb.code === 'auth/operation-not-allowed') {
           setFirebaseNotice(
-            'Autenticação local do painel ativa. Para gravar diretamente no Firestore sem login Google, ative "E-mail/senha" no Firebase Authentication ou clique em Conectar Google na aba Segurança.'
+            'Autenticação administrativa ativa. Para gravar diretamente no Firestore em nuvem, clique em Conectar Google Firebase.'
           );
         }
       } catch {
@@ -192,7 +240,15 @@ export function AdminPage({
       for (const p of properties) {
         await syncPropertyToFirestore(p);
       }
-      notify('Conta Google conectada e dados sincronizados com o Firestore.');
+      for (const d of developments) {
+        await syncDevelopmentToFirestore(d);
+      }
+      for (const lp of landingPages) {
+        await syncLandingPageToFirestore(lp);
+      }
+      await loadAdminWorkspace(tenant.tenantId);
+      await onDataChanged(tenant.tenantId);
+      notify('Conta Google conectada e banco Firestore atualizado com sucesso.');
     } catch (err) {
       notifyError(
         err instanceof Error
@@ -1256,7 +1312,8 @@ export function AdminPage({
                     <button
                       type="button"
                       onClick={async () => {
-                        await apiAdminSaveDevelopment(editingDev);
+                        const { development } = await apiAdminSaveDevelopment(editingDev);
+                        await syncDevelopmentToFirestore(development).catch(() => {});
                         await loadAdminWorkspace(tenant.tenantId);
                         await onDataChanged(tenant.tenantId);
                         setEditingDev(null);
@@ -1298,6 +1355,7 @@ export function AdminPage({
                       type="button"
                       onClick={async () => {
                         await apiAdminDeleteDevelopment(d.id);
+                        await deleteDevelopmentFromFirestore(d.id).catch(() => {});
                         await loadAdminWorkspace(tenant.tenantId);
                         await onDataChanged(tenant.tenantId);
                       }}
@@ -1392,7 +1450,8 @@ export function AdminPage({
                   <button
                     type="button"
                     onClick={async () => {
-                      await apiAdminSaveLandingPage(editingLp);
+                      const { landingPage } = await apiAdminSaveLandingPage(editingLp);
+                      await syncLandingPageToFirestore(landingPage).catch(() => {});
                       await loadAdminWorkspace(tenant.tenantId);
                       await onDataChanged(tenant.tenantId);
                       setEditingLp(null);
@@ -1430,6 +1489,7 @@ export function AdminPage({
                       type="button"
                       onClick={async () => {
                         await apiAdminDeleteLandingPage(lp.id);
+                        await deleteLandingPageFromFirestore(lp.id).catch(() => {});
                         await loadAdminWorkspace(tenant.tenantId);
                         await onDataChanged(tenant.tenantId);
                       }}
@@ -1503,9 +1563,10 @@ export function AdminPage({
                           <select
                             value={l.status}
                             onChange={async (e) => {
-                              await apiAdminUpdateLeadStatus(
-                                l.id,
-                                e.target.value as LeadStatus
+                              const nextStatus = e.target.value as LeadStatus;
+                              await apiAdminUpdateLeadStatus(l.id, nextStatus);
+                              await updateLeadStatusInFirestore(l.id, nextStatus).catch(
+                                () => {}
                               );
                               await loadAdminWorkspace(tenant.tenantId);
                             }}
@@ -1523,6 +1584,7 @@ export function AdminPage({
                             type="button"
                             onClick={async () => {
                               await apiAdminDeleteLead(l.id);
+                              await deleteLeadFromFirestore(l.id).catch(() => {});
                               await loadAdminWorkspace(tenant.tenantId);
                             }}
                             className="text-red-700 hover:underline inline-flex items-center gap-1"

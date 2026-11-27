@@ -10,13 +10,39 @@ import type {
   VirtualTourData,
 } from '../types/realEstate';
 
-let adminBearerToken: string | null = null;
+const ADMIN_TOKEN_KEY = 'ads_admin_session_token';
+
+function readStoredToken(): string | null {
+  try {
+    return typeof window !== 'undefined'
+      ? window.sessionStorage.getItem(ADMIN_TOKEN_KEY)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+let adminBearerToken: string | null = readStoredToken();
 
 export function setAdminToken(token: string | null) {
   adminBearerToken = token;
+  try {
+    if (typeof window !== 'undefined') {
+      if (token) {
+        window.sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+      } else {
+        window.sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      }
+    }
+  } catch {
+    // Ignore storage quota or restricted iframe errors
+  }
 }
 
 export function getAdminToken(): string | null {
+  if (!adminBearerToken) {
+    adminBearerToken = readStoredToken();
+  }
   return adminBearerToken;
 }
 

@@ -115,29 +115,37 @@ export default function App() {
   const refreshPublicData = useCallback(
     async (tid = activeTenantId) => {
       try {
-        const [serverData, fsData] = await Promise.all([
+        const [serverRes, fsRes] = await Promise.allSettled([
           apiGetPublicBootstrap(tid),
           fetchPublicFirestoreData(tid),
         ]);
-        const nextTenant = fsData.tenant || serverData.tenant || DEFAULT_TENANT_CONFIG;
+        const serverData = serverRes.status === 'fulfilled' ? serverRes.value : null;
+        const fsData = fsRes.status === 'fulfilled' ? fsRes.value : null;
+
+        const nextTenant =
+          fsData?.tenant || serverData?.tenant || DEFAULT_TENANT_CONFIG;
         setTenant(nextTenant);
         applyThemeTokens(nextTenant);
 
-        // Merge Firestore published entries over server defaults if present
-        if (fsData.properties.length > 0) {
+        const baseProps = serverData?.properties || DEFAULT_PROPERTIES;
+        if (fsData && fsData.properties.length > 0) {
           const map = new Map<string, Property>();
-          for (const p of serverData.properties) map.set(p.id, p);
+          for (const p of baseProps) map.set(p.id, p);
           for (const p of fsData.properties) map.set(p.id, p);
           setProperties(Array.from(map.values()));
         } else {
-          setProperties(serverData.properties);
+          setProperties(baseProps);
         }
 
         setDevelopments(
-          fsData.developments.length > 0 ? fsData.developments : serverData.developments
+          fsData && fsData.developments.length > 0
+            ? fsData.developments
+            : serverData?.developments || DEFAULT_DEVELOPMENTS
         );
         setLandingPages(
-          fsData.landingPages.length > 0 ? fsData.landingPages : serverData.landingPages
+          fsData && fsData.landingPages.length > 0
+            ? fsData.landingPages
+            : serverData?.landingPages || DEFAULT_LANDING_PAGES
         );
       } catch {
         applyThemeTokens(DEFAULT_TENANT_CONFIG);
