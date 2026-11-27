@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   Building2,
@@ -146,6 +146,14 @@ export function AdminPage({
     setLandingPages(data.landingPages);
     setLeads(data.leads);
   };
+
+  useEffect(() => {
+    if (!authenticated || tenants.length > 0) return;
+    loadAdminWorkspace(activeTenantId).catch(() => {
+      setAdminToken(null);
+      setAuthenticated(false);
+    });
+  }, [authenticated, activeTenantId]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
