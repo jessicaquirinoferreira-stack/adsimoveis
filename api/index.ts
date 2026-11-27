@@ -1,21 +1,26 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { handleCoreApiRequest } from '../server/coreHandler';
-import { resolveRequestRoute, sendJson } from '../server/shared';
+import { handleApiRequest } from '../server/apiHandler';
 
 export default async function handler(
   req: IncomingMessage & { body?: unknown },
   res: ServerResponse
 ) {
   try {
-    const handled = await handleCoreApiRequest(req, res);
+    const handled = await handleApiRequest(req, res);
     if (!handled && !res.headersSent) {
-      sendJson(res, 404, { error: 'Rota API não encontrada.' });
+      res.statusCode = 404;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify({ error: 'Rota API não encontrada.' }));
     }
   } catch (err) {
     if (!res.headersSent) {
-      sendJson(res, 500, {
-        error: err instanceof Error ? err.message : 'Erro interno no servidor.',
-      });
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(
+        JSON.stringify({
+          error: err instanceof Error ? err.message : 'Erro interno no servidor.',
+        })
+      );
     }
   }
 }
